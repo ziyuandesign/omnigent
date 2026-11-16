@@ -96,6 +96,7 @@ import {
   UserRoundIcon,
   UsersIcon,
   WalletIcon,
+  WandSparklesIcon,
   WorkflowIcon,
   XIcon,
   type LucideIcon,
@@ -415,6 +416,9 @@ function trailingSlotKind(
 }
 
 const DROP_TARGET_HIGHLIGHT = SIDEBAR_ACTIVE_HIGHLIGHT;
+// A folder whose placeholder row carries the active highlight marks itself
+// with the row hover background at rest, quieter than the placeholder.
+const QUIET_ACTIVE_HIGHLIGHT = "bg-muted dark:bg-muted/50";
 
 // Stable sensor options keep dnd-kit from rerendering every row on list updates.
 const KEYBOARD_SENSOR_OPTIONS = {
@@ -1885,6 +1889,27 @@ function ProjectFolder({
   });
   const orderedMenuActions = { ...menuActions, ordering };
 
+  // While a new session is being composed for this project, hold its place at
+  // the top of the open folder; beginLocalConversation's provisional row takes
+  // over once the first message is sent and the route changes.
+  const newSessionPlaceholder =
+    active && expanded ? (
+      <div className="pt-1 pl-6">
+        <div
+          data-testid="sidebar-new-session-placeholder"
+          className={cn(
+            SIDEBAR_ROW,
+            "flex w-full items-center text-left",
+            SIDEBAR_ACTIVE_HIGHLIGHT,
+          )}
+        >
+          <WandSparklesIcon aria-hidden className="size-3.5 shrink-0" />
+          <span className="min-w-0 truncate">New session</span>
+        </div>
+      </div>
+    ) : null;
+  const placeholderVisible = newSessionPlaceholder !== null;
+
   let footer: ReactNode = null;
   if (loadingFirstPage) {
     footer = (
@@ -1947,19 +1972,23 @@ function ProjectFolder({
             <FolderOpenIcon
               className={cn(
                 "ui-icon",
-                active ? "text-[var(--sidebar-active-foreground)]" : "text-muted-foreground",
+                active && !placeholderVisible
+                  ? "text-[var(--sidebar-active-foreground)]"
+                  : "text-muted-foreground",
               )}
             />
           ) : (
             <FolderIcon
               className={cn(
                 "ui-icon",
-                active ? "text-[var(--sidebar-active-foreground)]" : "text-muted-foreground",
+                active && !placeholderVisible
+                  ? "text-[var(--sidebar-active-foreground)]"
+                  : "text-muted-foreground",
               )}
             />
           )
         }
-        active={active}
+        active={active && placeholderVisible ? "quiet" : active}
         marker={marker}
         conversations={display.rows}
         heldConversations={
@@ -1981,8 +2010,9 @@ function ProjectFolder({
         onToggleSelected={onToggleSelected}
         onProjectAssigned={onProjectAssigned}
         reorderGroup={reorderable ? `project:${name}` : undefined}
+        afterHeader={newSessionPlaceholder}
         emptyMessage={
-          loadingFirstPage ? undefined : archived ? (
+          loadingFirstPage || newSessionPlaceholder ? undefined : archived ? (
             "No archived sessions"
           ) : (
             <span className="block">
@@ -3860,8 +3890,9 @@ function SectionHeader({
   status?: ReactNode;
   icon?: ReactNode;
   marker?: SessionState | null;
-  /** Whether this header represents the current page context. */
-  active?: boolean;
+  /** Whether this header represents the current page context; "quiet" keeps
+      the page marker but takes the hover background instead of the active one. */
+  active?: boolean | "quiet";
   /** Whether the section also renders header controls overlaid at the right
       edge. Those overlays are painted whenever hover isn't available (phones,
       touch tablets/laptops at any width), so the collapsed badges reserve the
@@ -3936,7 +3967,7 @@ function SectionHeader({
               "group flex w-full items-center border-0 text-left text-foreground transition-colors",
               SIDEBAR_HOVER_HIGHLIGHT,
               contextMenu && SIDEBAR_OPEN_MENU_HIGHLIGHT,
-              active && SIDEBAR_ACTIVE_HIGHLIGHT,
+              active === "quiet" ? QUIET_ACTIVE_HIGHLIGHT : active && SIDEBAR_ACTIVE_HIGHLIGHT,
               hasAction &&
                 !showsMarker &&
                 "pr-8 [@media((hover:hover)_and_(pointer:fine))]:pr-14 [@media((hover:hover)_and_(pointer:fine))]:md:pr-2 [@media((hover:hover)_and_(pointer:fine))]:md:group-hover/header:pr-14 [@media((hover:hover)_and_(pointer:fine))]:md:group-has-[[data-header-controls]:focus-within]/header:pr-14 [@media((hover:hover)_and_(pointer:fine))]:md:group-has-[[data-state=open]]/header:pr-14",
@@ -4506,7 +4537,7 @@ function ConversationSection({
   /** When collapsed, the aggregate marker of hidden rows (same badge as a row). */
   marker?: SessionState | null;
   /** Whether this section header represents the current page context. */
-  active?: boolean;
+  active?: boolean | "quiet";
   conversations: Conversation[];
   /** Rows still listed while collapsed (a project folder's open session). */
   heldConversations?: Conversation[];
