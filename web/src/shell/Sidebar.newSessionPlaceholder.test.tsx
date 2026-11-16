@@ -105,6 +105,18 @@ describe("new-session placeholder row", () => {
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
 
+    // The header steps back to the quiet hover background while the
+    // placeholder carries the active highlight, but still marks the page.
+    const header = screen.getByRole("button", { name: "Alpha" });
+    expect(header).toHaveAttribute("aria-current", "page");
+    expect(header).toHaveClass("bg-muted", "text-foreground");
+    expect(header).not.toHaveClass(
+      "bg-[var(--sidebar-active)]",
+      "text-[var(--sidebar-active-foreground)]",
+    );
+    expect(header.querySelector(".lucide-folder-open")).toHaveClass("text-muted-foreground");
+    expect(screen.getByRole("button", { name: "Beta" })).not.toHaveClass("bg-muted");
+
     // Active-row highlight on the row; the label inherits its foreground.
     expect(placeholder).toHaveClass(
       "sidebar-row",
@@ -130,6 +142,22 @@ describe("new-session placeholder row", () => {
     expect(placeholder.querySelector("a, button, input")).toBeNull();
     expect(placeholder.closest("[data-sidebar-session-id]")).toBeNull();
     expect(placeholder.querySelector("[aria-keyshortcuts]")).toBeNull();
+  });
+
+  it("keeps the active header highlight on a collapsed target folder", () => {
+    localStorage.setItem(EXPANDED_PROJECT_SECTIONS_STORAGE_KEY, JSON.stringify(["Beta"]));
+    renderAt("/?project=Alpha");
+
+    expect(screen.queryByTestId("sidebar-new-session-placeholder")).toBeNull();
+    const header = screen.getByRole("button", { name: "Alpha" });
+    expect(header).toHaveAttribute("aria-current", "page");
+    expect(header).toHaveClass(
+      "bg-[var(--sidebar-active)]",
+      "text-[var(--sidebar-active-foreground)]",
+    );
+    expect(header.querySelector(".lucide-folder")).toHaveClass(
+      "text-[var(--sidebar-active-foreground)]",
+    );
   });
 
   it("renders no placeholder on a session route", () => {
