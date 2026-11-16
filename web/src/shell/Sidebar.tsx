@@ -1885,6 +1885,25 @@ function ProjectFolder({
   });
   const orderedMenuActions = { ...menuActions, ordering };
 
+  // While a new session is being composed for this project, hold its place at
+  // the top of the open folder; beginLocalConversation's provisional row takes
+  // over once the first message is sent and the route changes.
+  const newSessionPlaceholder =
+    active && expanded ? (
+      <div className="pt-1 pl-6">
+        <div
+          data-testid="sidebar-new-session-placeholder"
+          className={cn(
+            SIDEBAR_ROW,
+            "flex w-full flex-col justify-center text-left",
+            SIDEBAR_ACTIVE_HIGHLIGHT,
+          )}
+        >
+          <span className="min-w-0 truncate italic text-muted-foreground">New session</span>
+        </div>
+      </div>
+    ) : null;
+
   let footer: ReactNode = null;
   if (loadingFirstPage) {
     footer = (
@@ -1981,8 +2000,9 @@ function ProjectFolder({
         onToggleSelected={onToggleSelected}
         onProjectAssigned={onProjectAssigned}
         reorderGroup={reorderable ? `project:${name}` : undefined}
+        afterHeader={newSessionPlaceholder}
         emptyMessage={
-          loadingFirstPage ? undefined : archived ? (
+          loadingFirstPage || newSessionPlaceholder ? undefined : archived ? (
             "No archived sessions"
           ) : (
             <span className="block">
