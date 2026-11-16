@@ -96,6 +96,7 @@ import {
   UserRoundIcon,
   UsersIcon,
   WalletIcon,
+  WandSparklesIcon,
   WorkflowIcon,
   XIcon,
   type LucideIcon,
@@ -1895,11 +1896,12 @@ function ProjectFolder({
           data-testid="sidebar-new-session-placeholder"
           className={cn(
             SIDEBAR_ROW,
-            "flex w-full flex-col justify-center text-left",
+            "flex w-full items-center text-left",
             SIDEBAR_ACTIVE_HIGHLIGHT,
           )}
         >
-          <span className="min-w-0 truncate italic text-muted-foreground">New session</span>
+          <WandSparklesIcon aria-hidden className="size-3.5 shrink-0" />
+          <span className="min-w-0 truncate">New session</span>
         </div>
       </div>
     ) : null;

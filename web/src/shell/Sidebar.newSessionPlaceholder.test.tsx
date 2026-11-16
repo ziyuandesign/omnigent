@@ -16,8 +16,11 @@ import { PROJECT_LABEL_KEY } from "@/lib/sessionListCache";
 import { EXPANDED_PROJECT_SECTIONS_STORAGE_KEY } from "@/shell/sidebarNav";
 
 vi.mock("@/hooks/useConversations", async () => {
-  const { conversationHooksMock, conversation: row, conversationPage: page } =
-    await import("@/test/sidebarMockHelpers");
+  const {
+    conversationHooksMock,
+    conversation: row,
+    conversationPage: page,
+  } = await import("@/test/sidebarMockHelpers");
   const { PROJECT_LABEL_KEY: projectLabelKey } = await import("@/lib/sessionListCache");
   return {
     ...conversationHooksMock(),
@@ -102,16 +105,24 @@ describe("new-session placeholder row", () => {
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
 
-    // Active-row highlight on the row, provisional (muted italic) label inside.
+    // Active-row highlight on the row; the label inherits its foreground.
     expect(placeholder).toHaveClass(
       "sidebar-row",
+      "items-center",
       "bg-[var(--sidebar-active)]",
       "text-[var(--sidebar-active-foreground)]",
     );
     expect(placeholder.parentElement).toHaveClass("pl-6");
-    expect(within(placeholder).getByText("New session")).toHaveClass(
-      "italic",
-      "text-muted-foreground",
+    const label = within(placeholder).getByText("New session");
+    expect(label).not.toHaveClass("italic", "text-muted-foreground");
+
+    // A leading sparkle icon, decorative only.
+    const icon = placeholder.querySelector("svg.lucide-wand-sparkles");
+    expect(icon).not.toBeNull();
+    expect(icon).toHaveAttribute("aria-hidden", "true");
+    expect(icon?.getAttribute("class")).toMatch(/\bsize-3\.5\b/);
+    expect(icon!.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
     );
 
     // Not a session: no link, controls, drag handle or shortcut slot.
